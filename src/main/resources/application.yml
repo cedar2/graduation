@@ -20,3 +20,5 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+app:
+  test-date: "2026-02-15"   # 为空或不配置时使用系统真实日期

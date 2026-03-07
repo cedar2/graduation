@@ -37,5 +37,6 @@ public class Appointment {
     private String cancelReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String checkinCode;
+    private LocalDateTime checkinCodeGeneratedAt;
 }
-
