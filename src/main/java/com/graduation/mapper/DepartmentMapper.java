@@ -1,0 +1,10 @@
+package com.graduation.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.graduation.entity.Department;
+import org.apache.ibatis.annotations.Mapper;
+
+
+public interface DepartmentMapper extends BaseMapper<Department> {
+}
+
