@@ -1,6 +1,8 @@
 D:\cedar2\graduation\src\main\java\com\graduation\common\ApiResponse.java
+D:\cedar2\graduation\src\main\java\com\graduation\config\BizClock.java
 D:\cedar2\graduation\src\main\java\com\graduation\config\CorsConfig.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\AppointmentController.java
+D:\cedar2\graduation\src\main\java\com\graduation\controller\BookingController.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\CheckinQueueController.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\DepartmentController.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\DoctorProfileController.java
@@ -15,6 +17,10 @@ D:\cedar2\graduation\src\main\java\com\graduation\controller\ScheduleSlotControl
 D:\cedar2\graduation\src\main\java\com\graduation\controller\ShiftRequestController.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\StatDailyDoctorController.java
 D:\cedar2\graduation\src\main\java\com\graduation\controller\SysUserController.java
+D:\cedar2\graduation\src\main\java\com\graduation\dto\CheckinRequest.java
+D:\cedar2\graduation\src\main\java\com\graduation\dto\CheckinResponse.java
+D:\cedar2\graduation\src\main\java\com\graduation\dto\CreateAppointmentRequest.java
+D:\cedar2\graduation\src\main\java\com\graduation\dto\CreateAppointmentResponse.java
 D:\cedar2\graduation\src\main\java\com\graduation\entity\Appointment.java
 D:\cedar2\graduation\src\main\java\com\graduation\entity\CheckinQueue.java
 D:\cedar2\graduation\src\main\java\com\graduation\entity\Department.java
