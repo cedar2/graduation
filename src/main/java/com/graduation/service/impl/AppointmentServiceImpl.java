@@ -1,11 +1,16 @@
 package com.graduation.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.graduation.common.AuthUser;
+import com.graduation.config.AuthContextHolder;
 import com.graduation.dto.CreateAppointmentRequest;
 import com.graduation.dto.CreateAppointmentResponse;
 import com.graduation.entity.Appointment;
+import com.graduation.entity.PatientProfile;
 import com.graduation.entity.ScheduleSlot;
 import com.graduation.mapper.AppointmentMapper;
+import com.graduation.mapper.PatientProfileMapper;
 import com.graduation.mapper.ScheduleSlotMapper;
 import com.graduation.service.AppointmentService;
 import org.springframework.dao.DuplicateKeyException;
@@ -23,14 +28,41 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     private static final int MAX_CHECKIN_CODE_RETRY = 10;
 
     private final ScheduleSlotMapper scheduleSlotMapper;
+    private final PatientProfileMapper patientProfileMapper;
 
-    public AppointmentServiceImpl(ScheduleSlotMapper scheduleSlotMapper) {
+    public AppointmentServiceImpl(ScheduleSlotMapper scheduleSlotMapper,
+                                  PatientProfileMapper patientProfileMapper) {
         this.scheduleSlotMapper = scheduleSlotMapper;
+        this.patientProfileMapper = patientProfileMapper;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CreateAppointmentResponse createAppointment(CreateAppointmentRequest request) {
+        AuthUser authUser = AuthContextHolder.get();
+        if (authUser == null) {
+            throw new IllegalStateException("未登录");
+        }
+
+        if ("PATIENT".equals(authUser.getRole())) {
+            PatientProfile loginProfile = patientProfileMapper.selectOne(new LambdaQueryWrapper<PatientProfile>()
+                    .eq(PatientProfile::getUserId, authUser.getUserId())
+                    .last("LIMIT 1"));
+            if (loginProfile == null) {
+                throw new IllegalStateException("请先完善就诊人信息后再预约");
+            }
+            if (!loginProfile.getId().equals(request.getPatientId())) {
+                throw new IllegalArgumentException("patientId与当前登录用户不匹配");
+            }
+            validatePatientProfileCompleted(loginProfile);
+        } else {
+            PatientProfile profile = patientProfileMapper.selectById(request.getPatientId());
+            if (profile == null) {
+                throw new IllegalArgumentException("患者档案不存在");
+            }
+            validatePatientProfileCompleted(profile);
+        }
+
         ScheduleSlot slot = scheduleSlotMapper.selectById(request.getScheduleId());
         if (slot == null) {
             throw new IllegalArgumentException("排班不存在");
@@ -90,5 +122,18 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     private String generateCheckinCode() {
         int value = ThreadLocalRandom.current().nextInt(0, 1_000_000);
         return String.format("%06d", value);
+    }
+
+    private void validatePatientProfileCompleted(PatientProfile profile) {
+        if (isBlank(profile.getRealName())
+                || isBlank(profile.getGender())
+                || profile.getBirthDate() == null
+                || isBlank(profile.getIdCardNo())) {
+            throw new IllegalStateException("请先完善身份证号、出生日期、性别等必填信息后再预约");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

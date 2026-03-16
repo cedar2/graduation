@@ -1,5 +1,11 @@
 package com.graduation.service;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.graduation.entity.PatientProfile;
-public interface PatientProfileService extends IService<PatientProfile> {}
 
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.graduation.dto.PatientProfileCompleteRequest;
+import com.graduation.entity.PatientProfile;
+
+public interface PatientProfileService extends IService<PatientProfile> {
+    PatientProfile getByUserId(Long userId);
+
+    PatientProfile completeProfile(Long userId, PatientProfileCompleteRequest request);
+}

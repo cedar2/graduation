@@ -2,6 +2,7 @@ package com.graduation.exception;
 
 import com.graduation.common.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ApiResponse<Void> handleIllegalState(IllegalStateException ex) {
         return ApiResponse.fail(ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ApiResponse<Void> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        return ApiResponse.fail("数据校验失败，请检查必填字段或唯一约束");
     }
 
     @ExceptionHandler(Exception.class)

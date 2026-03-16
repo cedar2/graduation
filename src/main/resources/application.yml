@@ -22,3 +22,8 @@ springdoc:
 
 app:
   test-date: "2026-02-15"
+  auth:
+    jwt-secret: "MedRegJwtSecretKey123456"
+    jwt-expire-seconds: 86400
+    captcha-expire-seconds: 300
+    sms-code-expire-seconds: 300
