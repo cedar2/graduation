@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -105,6 +106,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public AuthLoginResponse login(AuthLoginRequest request) {
         SmsCodeItem smsCodeItem = smsCodeStore.get(request.getPhone());
         if (smsCodeItem == null || smsCodeItem.expired()) {
@@ -123,6 +125,8 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             user = registerPatientUser(request.getPhone());
             newUser = true;
+        } else {
+            ensurePatientProfileExists(user);
         }
 
         user.setLastLoginAt(LocalDateTime.now());
@@ -191,15 +195,45 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             sysUserMapper.insert(candidate);
+            ensurePatientProfileExists(candidate);
             return candidate;
         } catch (DuplicateKeyException ex) {
             SysUser exists = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                     .eq(SysUser::getPhone, phone)
                     .last("LIMIT 1"));
             if (exists != null) {
+                ensurePatientProfileExists(exists);
                 return exists;
             }
             throw ex;
+        }
+    }
+
+    private void ensurePatientProfileExists(SysUser user) {
+        if (user == null || user.getId() == null || !"PATIENT".equals(user.getRole())) {
+            return;
+        }
+
+        PatientProfile existing = patientProfileMapper.selectOne(new LambdaQueryWrapper<PatientProfile>()
+                .eq(PatientProfile::getUserId, user.getId())
+                .last("LIMIT 1"));
+        if (existing != null) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        PatientProfile candidate = PatientProfile.builder()
+                .userId(user.getId())
+                .realName("待完善")
+                .idCardNo("PENDING_" + user.getId())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        try {
+            patientProfileMapper.insert(candidate);
+        } catch (DuplicateKeyException ignore) {
+            // 并发登录场景下，另一个请求可能已经创建档案。
         }
     }
 
@@ -207,7 +241,8 @@ public class AuthServiceImpl implements AuthService {
         return notBlank(profile.getRealName())
                 && notBlank(profile.getGender())
                 && profile.getBirthDate() != null
-                && notBlank(profile.getIdCardNo());
+                && notBlank(profile.getIdCardNo())
+                && !profile.getIdCardNo().startsWith("PENDING_");
     }
 
     private boolean notBlank(String value) {

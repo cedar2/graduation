@@ -1,9 +1,9 @@
 package com.graduation.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.graduation.common.ApiResponse;
 import com.graduation.entity.Department;
 import com.graduation.service.DepartmentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,12 +12,24 @@ import java.util.List;
 @RequestMapping("/api/department")
 public class DepartmentController {
 
-    @Autowired
-    private DepartmentService departmentService;
+    private final DepartmentService departmentService;
+
+    public DepartmentController(DepartmentService departmentService) {
+        this.departmentService = departmentService;
+    }
 
     @GetMapping
-    public ApiResponse<List<Department>> list() {
-        return ApiResponse.success(departmentService.list());
+    public ApiResponse<List<Department>> list(@RequestParam(required = false) Integer status,
+                                              @RequestParam(required = false) String keyword) {
+        LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<Department>()
+                .orderByAsc(Department::getId);
+        if (status != null) {
+            wrapper.eq(Department::getStatus, status);
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            wrapper.and(w -> w.like(Department::getName, keyword).or().like(Department::getCode, keyword));
+        }
+        return ApiResponse.success(departmentService.list(wrapper));
     }
 
     @GetMapping("/{id}")
@@ -40,4 +52,3 @@ public class DepartmentController {
         return ApiResponse.success(departmentService.removeById(id));
     }
 }
-
